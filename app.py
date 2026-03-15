@@ -56,7 +56,7 @@ def download():
     ydl_opts = {
         'format': 'bestaudio/best' if is_audio else f'{f_id}+bestaudio/best',
         'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
-        'ffmpeg_location': '/usr/bin/ffmpeg',  # Correct Linux path
+        'ffmpeg_location': os.path.join(os.getcwd(), 'ffmpeg', 'ffmpeg'),  # Correct Linux path
         'noplaylist': True
     }
 
