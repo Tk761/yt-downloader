@@ -4,8 +4,10 @@ import os
 
 app = Flask(__name__)
 
-# On Render, we must use the /tmp folder for temporary downloads
+# Render-specific setup
 DOWNLOAD_FOLDER = '/tmp'
+# This points to the portable FFmpeg we download in build.sh
+FFMPEG_PATH = os.path.join(os.getcwd(), 'ffmpeg_dir', 'ffmpeg')
 
 def format_size(bytes):
     if not bytes: return "N/A"
@@ -22,7 +24,11 @@ def index():
 @app.route('/get_info', methods=['POST'])
 def get_info():
     url = request.form.get('url')
-    ydl_opts = {'quiet': True, 'format_sort': ['res', 'ext:mp4:m4a']}
+    ydl_opts = {
+        'quiet': True,
+        'cookiefile': 'cookies.txt',  # This reads the Secret File you made in Render
+        'format_sort': ['res', 'ext:mp4:m4a']
+    }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -52,11 +58,11 @@ def download():
     f_id = request.form.get('format_id')
     is_audio = request.form.get('is_audio') == 'True'
 
-    # Set up options for Linux/Render
     ydl_opts = {
         'format': 'bestaudio/best' if is_audio else f'{f_id}+bestaudio/best',
         'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
-        'ffmpeg_location': os.path.join(os.getcwd(), 'ffmpeg', 'ffmpeg'),  # Correct Linux path
+        'ffmpeg_location': FFMPEG_PATH,
+        'cookiefile': 'cookies.txt', # This also uses the Secret File
         'noplaylist': True
     }
 
@@ -72,7 +78,6 @@ def download():
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
             
-            # Adjust path for audio conversion
             if is_audio:
                 filename = os.path.splitext(filename)[0] + ".mp3"
 
